@@ -1,0 +1,32 @@
+# Ignore macOS system files
+.DS_Store
+
+# Ignore Python virtual environments
+myenv/
+
+# Ignore all CSV files in specific directories
+*.csv
+
+# Ignore directories related to old or unnecessary data
+alibaba/
+design-drafts/
+embeddings/
+fabric-data/
+image-conversion/
+previous-manufacture-data/
+
+# Ignore all directories starting with "manufacture"
+manufacture_*/
+
+# Ignore all sample images
+alibaba-sample-images/
+
+# Ignore all files in the root project folder
+/all-manufactures/
+/all-products/
+
+# Ignore any other specific files or folders
+europeanManufacture/
+korean_factory/
+
+node_modules/
