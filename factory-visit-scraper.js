@@ -1,10 +1,7 @@
 import puppeteer from "puppeteer";
 // import fs, { link } from "fs";
 import { insertFactory, closePool, ensureTableExists } from "./database.js";
-
-function delay(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import delay from "./untils.js";
 
 const getQuotes = async () => {
   const browser = await puppeteer.launch({
