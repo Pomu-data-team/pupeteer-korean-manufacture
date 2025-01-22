@@ -17,14 +17,13 @@ export const readFactory = async () => {
   try {
     //  ORDER BY RANDOM() LIMIT 10
     const query = `
-    SELECT manufacture_name, url FROM factory_visit
+    SELECT manufacture_name, manufacture_url, id FROM manufacture_info
     `;
     const result = await pool.query(query);
     const factories = result.rows;
-    // console.log("Factories retrieved:", factories);
     return factories;
   } catch (error) {
-    console.log(`error getting data from database. error is \n ${error}`);
+    console.log(`error readFactory: \n ${error}`);
     return [];
   }
 };
@@ -40,6 +39,33 @@ export const insertFactory = async (manufacture_name, url) => {
     await pool.query(query, [manufacture_name, url]);
   } catch (err) {
     console.error("Error inserting factory:", err);
+  }
+};
+
+export const insertProductVisit = async (
+  product_name,
+  product_url,
+  manufacture_url,
+  manufacture_id
+) => {
+  console.log(
+    `In insertProductVisit\nproduct_name=${product_name}, product_url=${product_url}, manufacture_id=${manufacture_id}`
+  );
+
+  try {
+    const query = `
+      INSERT INTO product_visit (product_name, product_url, manufacture_url, manufacture_id)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (product_name) DO NOTHING;
+    `;
+    await pool.query(query, [
+      product_name,
+      product_url,
+      manufacture_url,
+      manufacture_id,
+    ]);
+  } catch (err) {
+    console.error("Error inserting product:", err);
   }
 };
 
@@ -151,6 +177,26 @@ export const ensureManufactureTableExists = async () => {
   }
 };
 
+export const ensureProductTableExists = async () => {
+  try {
+    const query = `
+    CREATE TABLE IF NOT EXISTS product_visit (
+      id SERIAL PRIMARY KEY, 
+      product_name TEXT NOT NULL UNIQUE, 
+      product_url TEXT NOT NULL, 
+      manufacture_url TEXT NOT NULL, 
+      manufacture_id INTEGER NOT NULL, 
+      CONSTRAINT fk_manufacture FOREIGN KEY (manufacture_id) REFERENCES manufacture_info (id) ON DELETE CASCADE
+    );
+    `;
+    await pool.query(query);
+  } catch (error) {
+    console.log(
+      `Failed to initialize product_visit table. error is \n${error}`
+    );
+  }
+};
+
 export const getDataCount = async (database_name) => {
   try {
     const query = `SELECT COUNT(*) AS count FROM ${database_name};`;
@@ -171,6 +217,23 @@ export const checkManufactureExists = async (manufacture_name, tableName) => {
         WHERE manufacture_name = $1
       ) AS exists;`;
     const values = [manufacture_name];
+    const result = await pool.query(query, values);
+    return result.rows[0].exists;
+  } catch (error) {
+    console.error(`Error checking manufacturer existence: ${error}`);
+    return false;
+  }
+};
+
+export const checkManufactureExistsURL = async (manufacture_url, tableName) => {
+  try {
+    const query = `
+      SELECT EXISTS (
+        SELECT 1
+        FROM ${tableName}
+        WHERE manufacture_url = $1
+      ) AS exists;`;
+    const values = [manufacture_url];
     const result = await pool.query(query, values);
     return result.rows[0].exists;
   } catch (error) {

@@ -4,12 +4,46 @@ export const delay = (ms) => {
 
 // Extract data from promise object obtained by page.$x()
 export const getData = async (elements, page) => {
+  if (!elements || elements.length == 0) {
+    console.error(`Get data failed. Elements passed in is: ${elements}`);
+    return null;
+  }
   return Promise.all(
     elements.map((element) => {
       // console.log(`in getData function the element is \n${element}`);
-      return page.evaluate((el) => el.textContent.trim(), element);
+      return element.evaluate((el) => el.textContent.trim(), element);
     })
   );
+};
+
+export const getDataNew = async (elements, type) => {
+  if (!elements || elements.length == 0) {
+    console.error(`GetDataNew failed. Elements passed in is: ${elements}`);
+    return null;
+  }
+  if (type === "TEXT") {
+    return Promise.all(
+      elements.map((element) => {
+        return element.evaluate((el) => el.textContent.trim(), element);
+      })
+    );
+  } else if (type === "IMG_SRC") {
+    return Promise.all(
+      elements.map((element) => {
+        return element.evaluate((el) => el.getAttribute("src"), element);
+      })
+    );
+  } else if (type === "URL") {
+    return Promise.all(
+      // elements.map(async (element) => {
+      //   const outerHTML = await page.evaluate((el) => el.outerHTML, element);
+      //   console.log("\nOuter HTML of element:\n", outerHTML);
+      // })
+      elements.map((element) => {
+        return element.evaluate((el) => el.getAttribute("href"), element);
+      })
+    );
+  }
 };
 
 // see if data exists else will return -1. cases are : "-", "- / -", http://, NaN
@@ -48,4 +82,25 @@ export const createFolder = () => {
     }
   });
   return dirName;
+};
+
+export const isButtonClickale = async (button) => {
+  // check if button is null
+  if (!button || button.length === 0) {
+    console.log("Button not found");
+    return false;
+  }
+  const isVisible = await button[0].isIntersectingViewport();
+  const isDisabled = await button[0].evaluate((el) =>
+    el.hasAttribute("disabled")
+  );
+
+  // check if it's clickable
+  if (isVisible && !isDisabled) {
+    console.log("The button is visible and clickable.");
+    return true;
+  } else {
+    console.log("The button is either not visible or not clickable.");
+    return false;
+  }
 };

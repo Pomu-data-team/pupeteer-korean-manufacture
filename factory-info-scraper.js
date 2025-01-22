@@ -59,10 +59,10 @@ for (const factories of factory_name_url) {
   classification = getValidData(classification);
   let general_four = await page.$x("//div[@class='shm-data']//dd/text()");
   let basic_info = await page.$x("//ul[@class='shm-basic-box']/li/p");
-  basic_info = await getData(basic_info, page);
-  basic_info = getValidData(basic_info);
-  general_four = await getData(general_four, page);
-  general_four = getValidData(general_four);
+  basic_info_handle = await getData(basic_info, page);
+  basic_info = getValidData(basic_info_handle);
+  general_four_handle = await getData(general_four, page);
+  general_four = getValidData(general_four_handle);
   let r_d_capacity = await page.$x(
     "//div[@class='focus-detail-block']//strong[contains(text(), 'Research')]/following-sibling::div"
   );

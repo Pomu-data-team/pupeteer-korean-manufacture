@@ -2,16 +2,19 @@
 
 ## Links
 
-the website: https://buykorea.org/cp/cpy/selectCompaniesList.do#none
+the website:
+https://buykorea.org/cp/cpy/selectCompaniesList.do
 
 example manufacture:
 https://buykorea.org/seller-home/1165285
 
-Mulformed factory pages: https://buykorea.org/seller-home/1108672/com/index.do
-
+example product pages:
+https://buykorea.org/ec/prd/selectGoodsDetail.do?goodsSn=3726131&inFlowCd=S
 
 ## Data type
 
-### Manufacture table
+<img src="readme-images/table.jpg" alt="database table overview" width="500" />
 
-### product table
+## Run the script
+
+`node + script_name`
