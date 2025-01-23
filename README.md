@@ -13,7 +13,23 @@ https://buykorea.org/ec/prd/selectGoodsDetail.do?goodsSn=3726131&inFlowCd=S
 
 ## Data type
 
+### Structure
+
 <img src="readme-images/table.jpg" alt="database table overview" width="500" />
+
+### Numbers in total
+
+#### manufacture_info
+
+<img src="readme-images/manufacture_info_overview.jpg" alt="database table overview" width="500" />
+
+#### product_info
+
+<img src="readme-images/manufacture_info_overview.jpg" alt="database table overview" width="500" />
+
+#### product_images
+
+<img src="readme-images/manufacture_info_overview.jpg" alt="database table overview" width="500" />
 
 ## Run the script
 

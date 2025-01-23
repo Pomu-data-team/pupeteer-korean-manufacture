@@ -6,7 +6,7 @@ export const delay = (ms) => {
 export const getData = async (elements, page) => {
   if (!elements || elements.length == 0) {
     console.error(`Get data failed. Elements passed in is: ${elements}`);
-    return null;
+    return -1;
   }
   return Promise.all(
     elements.map((element) => {
@@ -19,7 +19,7 @@ export const getData = async (elements, page) => {
 export const getDataNew = async (elements, type) => {
   if (!elements || elements.length == 0) {
     console.error(`GetDataNew failed. Elements passed in is: ${elements}`);
-    return null;
+    return -1;
   }
   if (type === "TEXT") {
     return Promise.all(
@@ -35,10 +35,6 @@ export const getDataNew = async (elements, type) => {
     );
   } else if (type === "URL") {
     return Promise.all(
-      // elements.map(async (element) => {
-      //   const outerHTML = await page.evaluate((el) => el.outerHTML, element);
-      //   console.log("\nOuter HTML of element:\n", outerHTML);
-      // })
       elements.map((element) => {
         return element.evaluate((el) => el.getAttribute("href"), element);
       })

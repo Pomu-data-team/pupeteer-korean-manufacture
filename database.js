@@ -28,6 +28,22 @@ export const readFactory = async () => {
   }
 };
 
+export const readProducts = async () => {
+  try {
+    const query = `
+    SELECT product_name, product_url, manufacture_url, manufacture_id 
+    FROM product_visit 
+    ORDER BY RANDOM()
+    LIMIT 10
+    `;
+    const result = await pool.query(query);
+    const products = result.rows;
+    return products;
+  } catch (error) {
+    console.error("Error read products\nerror is\n".error);
+  }
+};
+
 // This function is for insert factory names and url to factroy_visit
 export const insertFactory = async (manufacture_name, url) => {
   try {
@@ -66,6 +82,29 @@ export const insertProductVisit = async (
     ]);
   } catch (err) {
     console.error("Error inserting product:", err);
+  }
+};
+
+export const insertProductInfo = async (product_item) => {
+  try {
+    const query = `
+      INSERT INTO product_info (manufacture_id, manufacture_url, product_name, product_url, price, overview_intro, MOQ, product_details, keywords)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (product_name) DO NOTHING;
+    `;
+    await pool.query(query, [
+      product_item.manufacture_id,
+      product_item.manufacture_url,
+      product_item.product_name,
+      product_item.product_url,
+      product_item.price,
+      product_item.overview_intro,
+      product_item.MOQ,
+      product_item.product_details,
+      product_item.keywords,
+    ]);
+  } catch (error) {
+    console.error(`Error inserting into product_info: \n${error}`);
   }
 };
 
@@ -197,6 +236,41 @@ export const ensureProductTableExists = async () => {
   }
 };
 
+export const ensureProductInfoTableExists = async () => {
+  try {
+    const query = `
+    CREATE TABLE IF NOT EXISTS product_info (
+      product_id SERIAL PRIMARY KEY, 
+      manufacture_id INTEGER NOT NULL, 
+      manufacture_url TEXT NOT NULL, 
+      product_name TEXT NOT NULL UNIQUE, 
+      product_url TEXT NOT NULL, 
+      price TEXT NOT NULL, 
+      overview_intro TEXT NOT NULL, 
+      MOQ TEXT NOT NULL, 
+      product_details TEXT NOT NULL, 
+      keywords TEXT NOT NULL, 
+      CONSTRAINT fk_manufacture FOREIGN KEY (manufacture_id) REFERENCES manufacture_info (id) ON DELETE CASCADE
+    );
+    `;
+    await pool.query(query);
+  } catch (error) {
+    console.log(
+      `Failed to initialize product_visit table. error is \n${error}`
+    );
+  }
+};
+
+// CREATE TABLE IF NOT EXISTS product_image (
+//   image_id SERIAL PRIMARY KEY,
+//   product_id TEXT NOT NULL UNIQUE,
+//   manufacure_url TEXT NOT NULL,
+//   product_url TEXT NOT NULL,
+//   product_name TEXT NOT NULL,
+//   image_encoding TEXT NOT NULL,
+//   CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES product_info (product_id) ON DELETE CASCADE
+// );
+
 export const getDataCount = async (database_name) => {
   try {
     const query = `SELECT COUNT(*) AS count FROM ${database_name};`;
@@ -239,5 +313,18 @@ export const checkManufactureExistsURL = async (manufacture_url, tableName) => {
   } catch (error) {
     console.error(`Error checking manufacturer existence: ${error}`);
     return false;
+  }
+};
+
+export const checkProductExists = async (product_name, table_name) => {
+  try {
+    const query = `SELECT EXISTS (
+      SELECT 1 FROM ${table_name} WHERE product_name=$1
+    ) AS exists`;
+    const values = [product_name];
+    const result = await pool.query(query, values);
+    return result.rows[0].exists;
+  } catch (error) {
+    console.log(`Error checking product exists\n${error}`);
   }
 };

@@ -1,140 +1,123 @@
 import puppeteer from "puppeteer";
 import {
-  readFactory,
   closePool,
-  ensureProductTableExists,
-  insertProductVisit,
-  checkManufactureExistsURL,
+  ensureProductInfoTableExists,
+  readProducts,
+  checkProductExists,
+  insertProductInfo,
 } from "./database.js";
-import { getDataNew, logToFile, isButtonClickale } from "./untils.js";
-import { delay } from "./untils.js";
+import { getDataNew, logToFile, delay } from "./untils.js";
 
 // open the browser
 const browser = await puppeteer.launch({
-  headless: false,
-  defaultViewport: null,
+  // headless: false,
+  // defaultViewport: null,
 });
 
 const page = await browser.newPage();
 
 // load 10 factories from database
-const manufactures = await readFactory();
+const products = await readProducts();
 
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
 const filePath = `logs/products_info_${timestamp}`;
 
-await ensureProductTableExists();
+await ensureProductInfoTableExists();
 
 // page.goto visit one by one
 let i = 0;
-for (const manufacture of manufactures) {
+for (const product of products) {
   i++; // manufacture number
 
-  const manufacture_name = manufacture["manufacture_name"];
-  const manufacture_url = manufacture["manufacture_url"];
-  const manufacture_id = manufacture["id"];
+  const manufacture_url = product["manufacture_url"];
+  const manufacture_id = product["manufacture_id"];
+  const product_name = product["product_name"];
+  const product_url = product["product_url"];
 
-  // Check if current manufacture exists in database
-  if (await checkManufactureExistsURL(manufacture_url, "product_visit")) {
-    console.log(`\nManufacture ${manufacture_name} exists. skipping...\n`);
+  // Check if current product exists in database
+  if (await checkProductExists(product_name, "product_info")) {
+    console.log(`\product ${product_name} exists. skipping...\n`);
     continue;
   }
+
   try {
-    await page.goto(manufacture_url);
+    await page.goto(product_url);
   } catch (err) {
     console.error(
-      `Error visiting manufacture URL: ${manufacture_url}\nerror is\n${err}`
+      `Error visiting product URL: ${product_url}\nerror is\n${err}`
     );
     continue;
   }
 
-  console.log(
-    `\n\n${i}th manufacture ${manufacture_name}, url: ${manufacture_url}\n`
+  console.log(`\n\n${i}th product ${product_name}, url: ${product_url}\n`);
+
+  await page
+    .evaluate(() => {
+      window.scrollBy(0, 3000);
+      return new Promise((resolve) => setTimeout(resolve, 2500));
+    })
+    .then(() =>
+      page.evaluate(() => {
+        window.scrollBy(0, -2000);
+        return new Promise((resolve) => setTimeout(resolve, 2500));
+      })
+    );
+
+  // Get all product information
+  const priceHandle = await page.$$(
+    "xpath/" + "//div[@class='goods-info']//div[@class='price-before']"
   );
+  const price = await getDataNew(priceHandle, "TEXT");
 
-  const nextButton = await page.$x(
-    "//button[@class='bk-icon-only btn-page-next']"
+  const overview_introHandle = await page.$$(
+    "xpath/" + "//div[@class='goods-info']//div[@class='overview-intro']"
   );
+  const overview_intro = await getDataNew(overview_introHandle, "TEXT");
 
-  await page.evaluate(() => {
-    window.scrollBy(0, 2000);
-  });
+  const MOQHandle = await page.$$(
+    "xpath/" + "//div[@class='quantity-area']//dd"
+  );
+  const MOQ = await getDataNew(MOQHandle, "TEXT");
+  // console.log("MOQ: ", MOQ);
 
-  await delay(2500);
+  const product_detailsHandle = await page.$$(
+    "xpath/" + "//div[@class='product-detail']"
+  );
+  let product_details = await getDataNew(product_detailsHandle, "TEXT");
+  if (product_details.length > 1) {
+    product_details = product_details.map((detail) => detail.join("\n"));
+  } else if (product_details !== -1) {
+    product_details = product_details[0];
+  }
+  // remember to delete "#"
+  const keywordsHandle = await page.$$(
+    "xpath/" + "//div[@class='tag-group']//span"
+  );
+  const keywords = await getDataNew(keywordsHandle, "TEXT");
 
-  let pg = 0;
-  do {
-    let products = [];
-    let product_items = await page.$$(
-      "xpath/" + "//div[@id='dv-CtgryGoodsList-area']//dl"
-    );
-    if (product_items.length === 0) {
-      console.error(
-        `No product items found for manufacture ${manufacture_name}`
-      );
-      continue; // Skip to the next manufacture if no products found
-    }
-    let product_name_handle = await product_items[0].$$(
-      "xpath/" + "//div[@class='goods-name ellipsis']"
-    );
-    let product_url_handle = await product_items[0].$$(
-      "xpath/" +
-        "//div[@class='img-goods img-xlarge']/a[@class='dv-goodsUnit-img-area']"
-    );
+  const product_item = {
+    manufacture_id: manufacture_id,
+    manufacture_url: manufacture_url,
+    product_name: product_name,
+    product_url: product_url,
+    price: price !== -1 ? price[0] : -1,
+    overview_intro: overview_intro !== -1 ? overview_intro[0] : -1,
+    MOQ: MOQ !== -1 ? MOQ[0] : -1,
+    product_details: product_details,
+    keywords: keywords.map((keyword) => keyword.slice(1)).join(", "),
+  };
 
-    if (!product_url_handle || product_url_handle.length === 0) {
-      throw new Error(
-        `No product URLs found for manufacture ${manufacture_name}`
-      );
-    }
+  console.log("product_item: \n", product_item);
 
-    let product_names = await getDataNew(product_name_handle, "TEXT");
-    product_url_handle = await getDataNew(product_url_handle, "URL");
-    let product_urls = product_url_handle.map(
-      (url) => "https://buykorea.org" + url
-    );
+  // Write all the data to database
+  insertProductInfo(product_item);
 
-    if (product_names.length === product_urls.length) {
-      products = product_names.map((name, index) => ({
-        name: name,
-        url: product_urls[index],
-      }));
-    } else {
-      console.error(
-        "Mismatch in product names and URLs count",
-        product_names,
-        product_urls
-      );
-    }
-
-    console.log(`Get ${products.length} products on page ${++pg}`);
-
-    // Write all the data to database
-    for (const product of products) {
-      console.log(
-        `product["name"]=${product["name"]}, product["url"]=${product["url"]}, manufacture_id=${manufacture_id}`
-      );
-      insertProductVisit(
-        product["name"],
-        product["url"],
-        manufacture_url,
-        manufacture_id
-      );
-    }
-
-    if (await isButtonClickale(nextButton)) {
-      await nextButton.click();
-      await delay(2500);
-    } else {
-      break;
-    }
-  } while (true);
   await delay(2500);
 
   // LOGGING
   logToFile(
     `
-  ${i}th manufacture ${manufacture_name}, url: ${manufacture_url}\n
+  ${i}th product ${product_name}, url: ${product_url}\n
   `,
     filePath
   );
