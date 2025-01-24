@@ -31,3 +31,4 @@ korean_factory/
 
 node_modules/
 logs/
+.env

@@ -1,13 +1,16 @@
 import pkg from "pg";
-import { logToFile } from "./untils.js";
 const { Pool } = pkg;
 
+import dotenv from "dotenv";
+dotenv.config();
+
 // Set up the PostgreSQL connection pool
+const db_password = process.env.db_password;
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
   database: "postgres",
-  password: "qiming1021",
+  password: db_password,
   port: 5432, // Default PostgreSQL port
 });
 
