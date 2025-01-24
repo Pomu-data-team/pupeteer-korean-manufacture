@@ -9,7 +9,7 @@ const db_password = process.env.db_password;
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "postgres",
+  database: "qiming",
   password: db_password,
   port: 5432, // Default PostgreSQL port
 });
@@ -36,8 +36,6 @@ export const readProducts = async () => {
     const query = `
     SELECT product_name, product_url, manufacture_url, manufacture_id 
     FROM product_visit 
-    ORDER BY RANDOM()
-    LIMIT 10
     `;
     const result = await pool.query(query);
     const products = result.rows;

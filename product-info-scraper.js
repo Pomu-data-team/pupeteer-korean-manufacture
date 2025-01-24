@@ -104,7 +104,7 @@ for (const product of products) {
     overview_intro: overview_intro !== -1 ? overview_intro[0] : -1,
     MOQ: MOQ !== -1 ? MOQ[0] : -1,
     product_details: product_details,
-    keywords: keywords.map((keyword) => keyword.slice(1)).join(", "),
+    keywords: keywords !== -1 ? keywords.map((keyword) => keyword.slice(1)).join(", ") : -1,
   };
 
   console.log("product_item: \n", product_item);
