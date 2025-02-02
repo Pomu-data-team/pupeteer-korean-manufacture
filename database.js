@@ -360,16 +360,19 @@ export const checkManufactureExistsURL = async (manufacture_url, tableName) => {
   }
 };
 
-export const checkProductExists = async (product_name, table_name) => {
+// Check if something already exists
+export const checkProductExists = async (item, table_name) => {
   try {
     const query = `SELECT EXISTS (
-      SELECT 1 FROM ${table_name} WHERE product_name=$1
+      SELECT 1 FROM ${table_name} WHERE ${item}=$1
     ) AS exists`;
-    const values = [product_name];
+    const values = [item];
     const result = await pool.query(query, values);
     return result.rows[0].exists;
   } catch (error) {
-    console.log(`Error checking product exists\n${error}`);
+    console.log(
+      `Error checking ${item} exists in table ${table_name}\n${error}`
+    );
   }
 };
 

@@ -4,6 +4,7 @@ import {
   readProductsWithID,
   ensureProductImageTableExists,
   insertProductImage,
+  checkProductExists,
 } from "./database.js";
 import { delay, getDataNew, urlToBase64 } from "./untils.js";
 
@@ -45,7 +46,7 @@ async function scrapeProduct(product) {
     }
     insertProductImage(imagesMap);
   } catch (err) {
-    console.error(`Error processing product ID=${productId}:`, error);
+    console.error(`Error processing product ID=${productId}:`, err);
   }
 
   await browser.close();
@@ -64,8 +65,15 @@ async function main() {
 
   let processedCount = 0;
   async function wrappedScrapeProduct(product) {
-    await scrapeProduct(product);
     processedCount++;
+
+    const exist = await checkProductExists("product_name", "product_image");
+    if (exist) {
+      console.log(`Skipping already existing product: ${product.product_name}`);
+      return;
+    }
+
+    await scrapeProduct(product);
 
     if (processedCount % 10 === 0 || processedCount === totalProducts) {
       console.log(
