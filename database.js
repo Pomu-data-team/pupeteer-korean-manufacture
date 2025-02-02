@@ -9,7 +9,7 @@ const db_password = process.env.db_password;
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "qiming",
+  database: "postgres",
   password: db_password,
   port: 5432, // Default PostgreSQL port
 });
@@ -78,9 +78,6 @@ export const insertProductImage = async (imageMap) => {
   try {
     for (const [key, value] of imageMap.entries())
       try {
-        console.log(
-          `Inserting...\nname: ${key},\nproduct: ${value.productUrl}`
-        );
         const query = `
       INSERT INTO product_image (product_id, image_name, product_name, product_url, image_url, image_encoding)
       VALUES ($1, $2, $3, $4, $5, $6)

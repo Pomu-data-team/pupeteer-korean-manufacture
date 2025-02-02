@@ -54,18 +54,39 @@ async function scrapeProduct(product) {
 async function main() {
   await ensureProductImageTableExists();
   const products = await readProductsWithID();
-  console.log(`Total products: ${products.length}`);
+  const totalProducts = products.length;
+  console.log(`Total products: ${totalProducts}`);
 
   const productChunks = [];
   for (let i = 0; i < products.length; i += MAX_CONCURRENT_BROWSERS) {
     productChunks.push(products.slice(i, i + MAX_CONCURRENT_BROWSERS));
   }
 
+  let processedCount = 0;
+  async function wrappedScrapeProduct(product) {
+    await scrapeProduct(product);
+    processedCount++;
+
+    if (processedCount % 10 === 0 || processedCount === totalProducts) {
+      console.log(
+        `Progress: ${processedCount}/${totalProducts} (${(
+          (processedCount / totalProducts) *
+          100
+        ).toFixed(2)}%)`
+      );
+    }
+  }
+
+  let chunk_number = 0;
+
   for (const chunk of productChunks) {
-    await Promise.all(chunk.map(scrapeProduct));
+    chunk_number++;
+    await Promise.all(chunk.map(wrappedScrapeProduct));
+    console.log(`Chunk ${chunk_number}/${productChunks.length} completed.`);
   }
 
   await closePool();
+  console.log(`✅ Finished processing all ${totalProducts} products!`);
 }
 
 main().catch(console.error);
