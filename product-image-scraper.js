@@ -7,7 +7,7 @@ import {
 } from "./database.js";
 import { delay, getDataNew, urlToBase64 } from "./untils.js";
 
-const MAX_CONCURRENT_BROWSERS = 2;
+const MAX_CONCURRENT_BROWSERS = 5;
 
 async function scrapeProduct(product) {
   const browser = await puppeteer.launch({
