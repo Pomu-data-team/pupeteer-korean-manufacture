@@ -39,6 +39,12 @@ export const getDataNew = async (elements, type) => {
         return element.evaluate((el) => el.getAttribute("href"), element);
       })
     );
+  } else if (type === "ALT") {
+    return Promise.all(
+      elements.map((element) => {
+        return element.evaluate((el) => el.getAttribute("alt"));
+      })
+    );
   }
 };
 
@@ -47,6 +53,7 @@ export const getValidData = (elements) => {
   return elements.map((el) => {
     if (
       el === "-" ||
+      el === " " ||
       el === "- / -" ||
       el === "http://" ||
       el === "NaN" ||
@@ -100,3 +107,19 @@ export const isButtonClickale = async (button) => {
     return false;
   }
 };
+
+// Convert to base64
+import fetch from "node-fetch";
+
+export async function urlToBase64(url) {
+  try {
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+
+    return base64;
+  } catch (error) {
+    console.error("Error converting URL to Base64:", error);
+    return null;
+  }
+}

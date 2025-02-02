@@ -45,6 +45,22 @@ export const readProducts = async () => {
   }
 };
 
+export const readProductsWithID = async () => {
+  try {
+    const query = `
+    SELECT id, product_name, product_url, manufacture_url, manufacture_id 
+    FROM product_visit 
+    ORDER BY RANDOM()
+    LIMIT 10
+    `;
+    const result = await pool.query(query);
+    const products = result.rows;
+    return products;
+  } catch (error) {
+    console.error("Error read products\nerror is\n".error);
+  }
+};
+
 // This function is for insert factory names and url to factroy_visit
 export const insertFactory = async (manufacture_name, url) => {
   try {
@@ -59,16 +75,42 @@ export const insertFactory = async (manufacture_name, url) => {
   }
 };
 
+export const insertProductImage = async (imageMap) => {
+  try {
+    for (const [key, value] of imageMap.entries())
+      try {
+        console.log(
+          `Inserting...\nname: ${key},\nproduct: ${value.productUrl}`
+        );
+        const query = `
+      INSERT INTO product_image (product_id, image_name, product_name, product_url, image_url, image_encoding)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      `;
+        await pool.query(query, [
+          value.productId,
+          key,
+          value.productName,
+          value.productUrl,
+          value.src,
+          value.encoding,
+        ]);
+      } catch (err) {
+        console.error(
+          `Error in inserting loop ${key} with ${value.productUrl}:`,
+          err
+        );
+      }
+  } catch (err) {
+    console.error("Error inserting product images:", err);
+  }
+};
+
 export const insertProductVisit = async (
   product_name,
   product_url,
   manufacture_url,
   manufacture_id
 ) => {
-  console.log(
-    `In insertProductVisit\nproduct_name=${product_name}, product_url=${product_url}, manufacture_id=${manufacture_id}`
-  );
-
   try {
     const query = `
       INSERT INTO product_visit (product_name, product_url, manufacture_url, manufacture_id)
@@ -161,12 +203,7 @@ export const insertManufactureInfo = async (result, path) => {
   }
 };
 
-// Function to close the pool when the app finishes
-export const closePool = async () => {
-  await pool.end();
-};
-
-// ensure Table Exists; if not create one
+// ensure factory_visit Exists; if not create one
 export const ensureTableExists = async () => {
   try {
     const query = `
@@ -183,6 +220,7 @@ export const ensureTableExists = async () => {
   }
 };
 
+// ensure manufacture_info exits
 export const ensureManufactureTableExists = async () => {
   try {
     const query = `
@@ -217,6 +255,7 @@ export const ensureManufactureTableExists = async () => {
   }
 };
 
+// ensure product_visit exists
 export const ensureProductTableExists = async () => {
   try {
     const query = `
@@ -256,21 +295,29 @@ export const ensureProductInfoTableExists = async () => {
     `;
     await pool.query(query);
   } catch (error) {
-    console.log(
-      `Failed to initialize product_visit table. error is \n${error}`
-    );
+    console.log(`Failed to initialize productInfo table. error is \n${error}`);
   }
 };
 
-// CREATE TABLE IF NOT EXISTS product_image (
-//   image_id SERIAL PRIMARY KEY,
-//   product_id TEXT NOT NULL UNIQUE,
-//   manufacure_url TEXT NOT NULL,
-//   product_url TEXT NOT NULL,
-//   product_name TEXT NOT NULL,
-//   image_encoding TEXT NOT NULL,
-//   CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES product_info (product_id) ON DELETE CASCADE
-// );
+export const ensureProductImageTableExists = async () => {
+  try {
+    const query = `
+    CREATE TABLE IF NOT EXISTS product_image (
+      image_id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL,
+      image_name TEXT NOT NULL,
+      product_name TEXT NOT NULL,
+      product_url TEXT NOT NULL,
+      image_url TEXT NOT NULL, 
+      image_encoding TEXT NOT NULL,
+      CONSTRAINT fk_product FOREIGN KEY (product_id) REFERENCES product_info (product_id) ON DELETE CASCADE
+    );
+    `;
+    await pool.query(query);
+  } catch (error) {
+    console.log(`Failed to initialize product_image table:\n${error}`);
+  }
+};
 
 export const getDataCount = async (database_name) => {
   try {
@@ -328,4 +375,9 @@ export const checkProductExists = async (product_name, table_name) => {
   } catch (error) {
     console.log(`Error checking product exists\n${error}`);
   }
+};
+
+// Function to close the pool when the app finishes
+export const closePool = async () => {
+  await pool.end();
 };
