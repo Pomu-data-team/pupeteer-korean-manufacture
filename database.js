@@ -9,7 +9,7 @@ const db_password = process.env.db_password;
 const pool = new Pool({
   user: "postgres",
   host: "localhost",
-  database: "qiming",
+  database: "postgres",
   password: db_password,
   port: 5432, // Default PostgreSQL port
 });
@@ -45,11 +45,12 @@ export const readProducts = async () => {
   }
 };
 
+// read from table product_info NOT product_visit
 export const readProductsWithID = async () => {
   try {
     const query = `
-    SELECT id, product_name, product_url, manufacture_url, manufacture_id 
-    FROM product_visit 
+    SELECT product_id, product_name, product_url, manufacture_url, manufacture_id 
+    FROM product_info 
     ORDER BY RANDOM()
     LIMIT 10
     `;
@@ -57,7 +58,7 @@ export const readProductsWithID = async () => {
     const products = result.rows;
     return products;
   } catch (error) {
-    console.error("Error read products\nerror is\n".error);
+    console.error("\nError read products:\n".error);
   }
 };
 
@@ -96,7 +97,7 @@ export const insertProductImage = async (imageMap) => {
         ]);
       } catch (err) {
         console.error(
-          `Error in inserting loop ${key} with ${value.productUrl}:`,
+          `\nError in inserting loop ${key} with ${value.productUrl}:\n`,
           err
         );
       }
