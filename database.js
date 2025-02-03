@@ -51,7 +51,9 @@ export const readProductsWithID = async () => {
     const query = `
     SELECT product_id, product_name, product_url, manufacture_url, manufacture_id 
     FROM product_info 
-    `;
+    ORDER BY RANDOM()
+    LIMIT 1000
+      `;
     const result = await pool.query(query);
     const products = result.rows;
     return products;
@@ -360,19 +362,44 @@ export const checkManufactureExistsURL = async (manufacture_url, tableName) => {
   }
 };
 
-// Check if something already exists
-export const checkProductExists = async (item, table_name) => {
+// Deprecated
+export const checkProductExists = async (value, table_name) => {
   try {
     const query = `SELECT EXISTS (
-      SELECT 1 FROM ${table_name} WHERE ${item}=$1
+      SELECT 1 FROM ${table_name} WHERE ${value}=$1
     ) AS exists`;
-    const values = [item];
+    const values = [value];
     const result = await pool.query(query, values);
     return result.rows[0].exists;
   } catch (error) {
     console.log(
-      `Error checking ${item} exists in table ${table_name}\n${error}`
+      `\nError checking ${item} exists in table ${table_name}\n${error}`
     );
+  }
+};
+
+// For a given 
+export const checkValueExists = async (table_name, column_name, value) => {
+  try {
+    // Prevent SQL injection by allowing only safe column names
+    const allowedTables = ["product_image", "product_info", "manufacture_info"]; // Add more if needed
+    const allowedColumns = ["product_id", "product_name", "image_url", "manufacture_id"]; // Add allowed column names
+
+    if (!allowedTables.includes(table_name) || !allowedColumns.includes(column_name)) {
+      throw new Error(`Invalid table (${table_name}) or column (${column_name})`);
+    }
+
+    const query = `SELECT EXISTS (
+      SELECT 1 FROM ${table_name} WHERE ${column_name} = $1
+    ) AS exists`;
+
+    const values = [value];
+    const result = await pool.query(query, values);
+
+    return result.rows[0].exists;
+  } catch (error) {
+    console.log(`\nError checking ${column_name}=${value} in table ${table_name}\n${error}`);
+    return false;
   }
 };
 

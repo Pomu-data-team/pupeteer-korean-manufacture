@@ -34,3 +34,15 @@ https://buykorea.org/ec/prd/selectGoodsDetail.do?goodsSn=3726131&inFlowCd=S
 ## Run the script
 
 `node + script_name`
+
+# Common commands
+
+### Log into postgres local
+
+`psql -U postgres -d postgres`
+
+### dump to backup and restore
+
+dump:
+
+restore:

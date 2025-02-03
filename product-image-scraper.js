@@ -4,7 +4,7 @@ import {
   readProductsWithID,
   ensureProductImageTableExists,
   insertProductImage,
-  checkProductExists,
+  checkValueExists,
 } from "./database.js";
 import { delay, getDataNew, urlToBase64 } from "./untils.js";
 
@@ -67,7 +67,12 @@ async function main() {
   async function wrappedScrapeProduct(product) {
     processedCount++;
 
-    const exist = await checkProductExists("product_name", "product_image");
+    // const checkValueExists = async (table_name, column_name, value)
+    const exist = await checkValueExists(
+      "product_image",
+      "product_id",
+      product.product_id
+    );
     if (exist) {
       console.log(`Skipping already existing product: ${product.product_name}`);
       return;
