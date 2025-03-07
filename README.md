@@ -1,4 +1,4 @@
-# Puppertier Webscraping automation
+# Puppertier Korean manufacture scraping
 
 ## Links
 
